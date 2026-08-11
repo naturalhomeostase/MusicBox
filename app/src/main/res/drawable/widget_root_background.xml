@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Fundo de fallback do widget (RemoteViews clássico não tem um jeito
+    confiável de "recortar" a capa em cantos arredondados como o
+    appWidgetBackground() do Glance tinha) — no Android 12+ o próprio
+    launcher já recorta o widget inteiro nos cantos do sistema por fora,
+    então isso aqui só importa mesmo em Android mais antigo (8–11), onde
+    fica como uma borda arredondada sólida atrás de tudo.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <corners android:radius="24dp" />
+    <solid android:color="#1A1A1D" />
+</shape>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget pequeno: só capa + play/pause no centro. Layout clássico
+    (RemoteViews) — só as Views que RemoteViews sabe inflar (FrameLayout,
+    LinearLayout, ImageView, ImageButton, TextView, View), nada de Compose.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_root_background">
+
+    <!-- Fundo sólido na cor de destaque — visível só quando não há capa. -->
+    <View
+        android:id="@+id/cover_fallback_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <ImageView
+        android:id="@+id/iv_cover"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="gone" />
+
+    <!-- Degradê escuro por cima, só pro botão ficar legível. -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_bg_gradient" />
+
+    <ImageButton
+        android:id="@+id/btn_play_pause"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:layout_gravity="center"
+        android:background="@drawable/widget_button_primary_selector"
+        android:src="@drawable/ic_widget_play"
+        android:scaleType="center"
+        android:padding="10dp"
+        android:contentDescription="@string/widget_play_pause_description" />
+
+</FrameLayout>

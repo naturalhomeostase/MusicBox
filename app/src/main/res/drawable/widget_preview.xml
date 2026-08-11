@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Preview estático usado no seletor de widgets do sistema
+     (android:previewImage). Vários launchers (Samsung One UI, versões mais
+     antigas do launcher do Pixel, entre outros) não sabem desenhar uma
+     prévia "ao vivo" a partir de previewLayout — sem um previewImage
+     estático, eles mostram uma caixa de erro tipo "não foi possível
+     carregar o widget" em vez de tentar. Isso aqui é só uma representação
+     simples e genérica (fundo escuro + botão de play dourado, igual ao
+     visual real do widget) — não precisa ser pixel-perfeito, só precisa
+     existir. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    <path
+        android:fillColor="#1A1A1D"
+        android:pathData="M0,0h200v200h-200z" />
+    <path
+        android:fillColor="#FFE3A63E"
+        android:pathData="M100,60m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M90,42v36l28,-18z" />
+    <path
+        android:fillColor="#FFE0E0E0"
+        android:pathData="M40,130h120v10h-120z" />
+    <path
+        android:fillColor="#FF8A8A8E"
+        android:pathData="M40,150h80v8h-80z" />
+</vector>
