@@ -1,4 +1,4 @@
-name: Build Harmonic
+name: Build Music Box
 
 on:
   push:
@@ -25,17 +25,12 @@ jobs:
         run: chmod +x ./gradlew
 
       # keystore/debug.keystore já vem commitado no repositório (é a senha
-      # pública padrão do Android, não é segredo — ver comentário em
-      # app/build.gradle.kts). Nada a fazer aqui pra ele.
+      # pública padrão do Android, não é segredo).
 
-      # keystore/release.keystore NUNCA é commitado. Ele é reconstruído
-      # aqui, em tempo de build, a partir do secret RELEASE_KEYSTORE_BASE64
-      # (conteúdo do seu release-keystore-base64.txt colado como secret).
-      # Se o secret não existir (ex: em Pull Requests de fora), esse passo
-      # é pulado e só a build de debug roda — release fica pra quando
-      # rodar direto na branch principal com os secrets configurados.
+      # keystore/release.keystore é reconstruído aqui a partir do secret
+      # RELEASE_KEYSTORE_BASE64. Nunca é commitado no repositório.
       - name: Restaurar keystore de release (a partir do secret)
-        if: ${{ env.RELEASE_KEYSTORE_BASE64 != '' }}
+        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
         env:
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
         run: |
@@ -46,7 +41,7 @@ jobs:
         run: ./gradlew assembleDebug --stacktrace
 
       - name: Build release (assembleRelease)
-        if: ${{ env.RELEASE_KEYSTORE_BASE64 != '' }}
+        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
         env:
           RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
           RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
@@ -54,17 +49,38 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: ./gradlew assembleRelease --stacktrace
 
+      # .aab (Android App Bundle) é o formato que a Google Play exige hoje
+      # em dia pra publicação — o .apk de release continua útil pra testar
+      # fora da loja (instalar direto no celular), mas não serve mais pra
+      # subir na Play Store.
+      - name: Build release (bundleRelease .aab)
+        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease --stacktrace
+
       - name: Publicar APK de debug
         uses: actions/upload-artifact@v4
         with:
-          name: harmonic-debug
+          name: musicbox-debug
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
       - name: Publicar APK de release
-        if: ${{ env.RELEASE_KEYSTORE_BASE64 != '' }}
+        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
         uses: actions/upload-artifact@v4
         with:
-          name: harmonic-release
+          name: musicbox-release-apk
           path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+
+      - name: Publicar AAB de release (para a Play Store)
+        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: musicbox-release-aab
+          path: app/build/outputs/bundle/release/*.aab
           if-no-files-found: warn
