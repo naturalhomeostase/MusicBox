@@ -1,0 +1,70 @@
+name: Build Harmonic
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Dar permissão de execução ao gradlew
+        run: chmod +x ./gradlew
+
+      # keystore/debug.keystore já vem commitado no repositório (é a senha
+      # pública padrão do Android, não é segredo — ver comentário em
+      # app/build.gradle.kts). Nada a fazer aqui pra ele.
+
+      # keystore/release.keystore NUNCA é commitado. Ele é reconstruído
+      # aqui, em tempo de build, a partir do secret RELEASE_KEYSTORE_BASE64
+      # (conteúdo do seu release-keystore-base64.txt colado como secret).
+      # Se o secret não existir (ex: em Pull Requests de fora), esse passo
+      # é pulado e só a build de debug roda — release fica pra quando
+      # rodar direto na branch principal com os secrets configurados.
+      - name: Restaurar keystore de release (a partir do secret)
+        if: ${{ env.RELEASE_KEYSTORE_BASE64 != '' }}
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p keystore
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > keystore/release.keystore
+
+      - name: Build debug (assembleDebug)
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Build release (assembleRelease)
+        if: ${{ env.RELEASE_KEYSTORE_BASE64 != '' }}
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Publicar APK de debug
+        uses: actions/upload-artifact@v4
+        with:
+          name: harmonic-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Publicar APK de release
+        if: ${{ env.RELEASE_KEYSTORE_BASE64 != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: harmonic-release
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
