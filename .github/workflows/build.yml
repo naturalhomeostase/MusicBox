@@ -10,6 +10,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+      RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+      RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+      RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -30,9 +35,7 @@ jobs:
       # keystore/release.keystore é reconstruído aqui a partir do secret
       # RELEASE_KEYSTORE_BASE64. Nunca é commitado no repositório.
       - name: Restaurar keystore de release (a partir do secret)
-        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
-        env:
-          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        if: ${{ env.RELEASE_KEYSTORE_BASE64 != '' }}
         run: |
           mkdir -p keystore
           echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > keystore/release.keystore
@@ -41,12 +44,7 @@ jobs:
         run: ./gradlew assembleDebug --stacktrace
 
       - name: Build release (assembleRelease)
-        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
-        env:
-          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
-          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
-          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        if: ${{ env.RELEASE_KEYSTORE_BASE64 != '' }}
         run: ./gradlew assembleRelease --stacktrace
 
       # .aab (Android App Bundle) é o formato que a Google Play exige hoje
@@ -54,12 +52,7 @@ jobs:
       # fora da loja (instalar direto no celular), mas não serve mais pra
       # subir na Play Store.
       - name: Build release (bundleRelease .aab)
-        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
-        env:
-          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
-          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
-          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        if: ${{ env.RELEASE_KEYSTORE_BASE64 != '' }}
         run: ./gradlew bundleRelease --stacktrace
 
       - name: Publicar APK de debug
@@ -70,7 +63,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publicar APK de release
-        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.RELEASE_KEYSTORE_BASE64 != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: musicbox-release-apk
@@ -78,7 +71,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Publicar AAB de release (para a Play Store)
-        if: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.RELEASE_KEYSTORE_BASE64 != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: musicbox-release-aab
