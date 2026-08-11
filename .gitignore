@@ -1,0 +1,39 @@
+# ===== Chaves de assinatura =====
+# Bloqueia QUALQUER .keystore ou .jks por padrão...
+*.keystore
+*.jks
+# ...menos o debug.keystore, que é seguro e deve continuar versionado
+!keystore/debug.keystore
+# Nunca versionar o txt em base64 nem arquivos de senha/segredo local
+*keystore-base64*.txt
+release-key-info.txt
+*.pepk
+local.properties
+
+# ===== Build =====
+*.apk
+*.aab
+*.ap_
+*.dex
+build/
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# ===== Android Studio / IntelliJ =====
+.idea/
+*.iml
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+*.hprof
+
+# ===== Sistema operacional =====
+.DS_Store
+Thumbs.db
+
+# ===== Logs e temporários =====
+*.log
+/local.properties
