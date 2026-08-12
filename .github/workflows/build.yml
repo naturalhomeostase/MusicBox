@@ -26,6 +26,9 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v3
+
       - name: Dar permissão de execução ao gradlew
         run: chmod +x ./gradlew
 
