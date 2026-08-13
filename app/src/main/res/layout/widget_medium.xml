@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_root_background">
 
-    <View
+    <ImageView
         android:id="@+id/cover_fallback_bg"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
@@ -18,7 +18,7 @@
         android:scaleType="centerCrop"
         android:visibility="gone" />
 
-    <View
+    <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/widget_bg_gradient" />

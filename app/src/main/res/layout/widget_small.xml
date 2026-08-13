@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Widget pequeno: só capa + play/pause no centro. Layout clássico
-    (RemoteViews) — só as Views que RemoteViews sabe inflar (FrameLayout,
-    LinearLayout, ImageView, ImageButton, TextView, View), nada de Compose.
+    (RemoteViews) — só as Views que RemoteViews sabe inflar de verdade:
+    FrameLayout/LinearLayout/RelativeLayout/GridLayout como contêiner, e
+    TextView/ImageView/ImageButton/Button como conteúdo. Um `<View>` puro
+    NÃO está nessa lista (é a causa exata do "widget can't load" que
+    apareceu na primeira versão) — por isso as caixas de cor/degradê aqui
+    usam ImageView em vez de View.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
@@ -11,7 +15,7 @@
     android:background="@drawable/widget_root_background">
 
     <!-- Fundo sólido na cor de destaque — visível só quando não há capa. -->
-    <View
+    <ImageView
         android:id="@+id/cover_fallback_bg"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
@@ -24,7 +28,7 @@
         android:visibility="gone" />
 
     <!-- Degradê escuro por cima, só pro botão ficar legível. -->
-    <View
+    <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/widget_bg_gradient" />
