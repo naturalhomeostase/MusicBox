@@ -118,7 +118,18 @@ private fun handleActionBroadcast(context: Context, intent: Intent, pendingResul
             val controller = WidgetMediaController.connect(context)
             if (controller == null) {
                 android.util.Log.e(TAG, "[$action] sessão não conectou (controller nulo)")
+                android.widget.Toast.makeText(context, "[Diagnóstico] $action: controller nulo (sessão não conectou)", android.widget.Toast.LENGTH_LONG).show()
                 return@launch
+            }
+            // DIAGNÓSTICO TEMPORÁRIO — remover depois de descobrir a causa
+            // real de próxima/anterior não responderem. Sem acesso a
+            // `adb logcat`, isso é o jeito de ver o que está acontecendo
+            // de verdade na hora do toque.
+            if (action == ACTION_NEXT || action == ACTION_PREVIOUS) {
+                val diag = "hasNext=${controller.hasNextMediaItem()} hasPrev=${controller.hasPreviousMediaItem()} " +
+                    "itemCount=${controller.mediaItemCount} currentIndex=${controller.currentMediaItemIndex} " +
+                    "repeatMode=${controller.repeatMode} isPlaying=${controller.isPlaying}"
+                android.widget.Toast.makeText(context, "[Diagnóstico] $action antes: $diag", android.widget.Toast.LENGTH_LONG).show()
             }
             when (action) {
                 ACTION_PLAY_PAUSE -> if (controller.isPlaying) controller.pause() else controller.play()
@@ -143,6 +154,7 @@ private fun handleActionBroadcast(context: Context, intent: Intent, pendingResul
             updateAllHarmonicWidgets(context)
         } catch (e: Exception) {
             android.util.Log.e(TAG, "[$action] falhou ao executar comando", e)
+            android.widget.Toast.makeText(context, "[Diagnóstico] $action falhou: ${e.javaClass.simpleName}: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
         } finally {
             pendingResult.finish()
         }
