@@ -199,6 +199,30 @@ private fun sortSongsByYear(songs: List<Song>, ascending: Boolean): List<Song> {
     return directional + withoutYear.sortedBy { it.title.lowercase() }
 }
 
+/**
+ * Aplica a ordenação escolhida (Título/Artista/Duração/Data adicionada/
+ * Ano/etc) a uma lista de músicas. Extraído como função própria — antes
+ * essa lógica só existia inline dentro do `remember` da lista de Músicas;
+ * os botões "Tocar tudo"/"Aleatório" lá em cima usavam a lista crua do
+ * banco (`allSongs`, sempre em ordem alfabética) em vez dessa aqui, então
+ * escolher "Artista" ou "Data adicionada" e apertar o botão sempre tocava
+ * em ordem alfabética mesmo assim — os botões nunca sabiam da ordenação
+ * escolhida. Ter uma função só, usada nos dois lugares, evita esse
+ * desalinhamento acontecer de novo.
+ */
+private fun sortSongs(songs: List<Song>, sortKey: String, sortAscending: Boolean): List<Song> {
+    if (sortKey == "year") return sortSongsByYear(songs, sortAscending)
+    val base = when (sortKey) {
+        "artist" -> songs.sortedBy { it.artist.lowercase() }
+        "duration" -> songs.sortedBy { it.durationMs }
+        "dateAdded" -> songs.sortedBy { it.dateAdded }
+        "playCount" -> songs.sortedBy { it.playCount }
+        "lastPlayedAt" -> songs.sortedBy { it.lastPlayedAt ?: 0L }
+        else -> songs.sortedBy { it.title.lowercase() }
+    }
+    return if (sortAscending) base else base.reversed()
+}
+
 /** Mesma ideia de [sortSongsByYear], mas pra lista de álbuns. */
 private fun sortAlbumsByYear(albums: List<com.harmonic.player.data.AlbumSummary>, ascending: Boolean): List<com.harmonic.player.data.AlbumSummary> {
     val (withYear, withoutYear) = albums.partition { it.year != null }
@@ -746,6 +770,9 @@ fun LibraryScreen(
                         when (selectedTab) {
                             LibraryTab.SONGS -> {
                                 val allSongs by dao.getAllSongs().collectAsState(initial = emptyList())
+                                val sortedForButtons = remember(allSongs, sortKey, sortAscending) {
+                                    sortSongs(allSongs, sortKey, sortAscending)
+                                }
                                 // "Ativo" = a fila tocando agora veio dessa
                                 // aba (tanto faz se foi o botão de play ou o
                                 // de aleatório que a colocou pra tocar — os
@@ -772,7 +799,14 @@ fun LibraryScreen(
                                             if (isThisSourceActive) {
                                                 playerController.togglePlayPause()
                                             } else {
-                                                playerController.requestPlayQueue(allSongs, 0, "songs", "Músicas")
+                                                // Usa a lista JÁ ORDENADA
+                                                // (sortedForButtons), não a
+                                                // crua do banco — sem isso,
+                                                // "Tocar tudo" sempre tocava
+                                                // em ordem alfabética, não
+                                                // importa a ordenação
+                                                // escolhida ali do lado.
+                                                playerController.requestPlayQueue(sortedForButtons, 0, "songs", "Músicas")
                                             }
                                         },
                                         modifier = Modifier.size(32.dp)
@@ -795,7 +829,7 @@ fun LibraryScreen(
                                                 )
                                         )
                                     }
-                                    IconButton(onClick = { playerController.requestPlayQueueShuffled(allSongs, "songs", "Músicas") }, modifier = Modifier.size(32.dp)) {
+                                    IconButton(onClick = { playerController.requestPlayQueueShuffled(sortedForButtons, "songs", "Músicas") }, modifier = Modifier.size(32.dp)) {
                                         Icon(
                                             Icons.Filled.Shuffle,
                                             contentDescription = "Aleatório",
@@ -821,6 +855,9 @@ fun LibraryScreen(
                             }
                             LibraryTab.FAVORITES -> {
                                 val allFavorites by dao.getFavorites().collectAsState(initial = emptyList())
+                                val sortedFavoritesForButtons = remember(allFavorites, favoritesSortKey, favoritesSortAscending) {
+                                    sortSongs(allFavorites, favoritesSortKey, favoritesSortAscending)
+                                }
                                 // Mesma ideia da aba Músicas, ver comentário acima.
                                 val isThisSourceActive = isQueueFullyActive(playbackState, allFavorites, "favorites")
                                 val isPlayingThis = isThisSourceActive && playbackState.isPlaying
@@ -841,7 +878,7 @@ fun LibraryScreen(
                                             if (isThisSourceActive) {
                                                 playerController.togglePlayPause()
                                             } else {
-                                                playerController.requestPlayQueue(allFavorites, 0, "favorites", "Favoritas")
+                                                playerController.requestPlayQueue(sortedFavoritesForButtons, 0, "favorites", "Favoritas")
                                             }
                                         },
                                         modifier = Modifier.size(32.dp)
@@ -864,7 +901,7 @@ fun LibraryScreen(
                                                 )
                                         )
                                     }
-                                    IconButton(onClick = { playerController.requestPlayQueueShuffled(allFavorites, "favorites", "Favoritas") }, modifier = Modifier.size(32.dp)) {
+                                    IconButton(onClick = { playerController.requestPlayQueueShuffled(sortedFavoritesForButtons, "favorites", "Favoritas") }, modifier = Modifier.size(32.dp)) {
                                         Icon(
                                             Icons.Filled.Shuffle,
                                             contentDescription = "Aleatório",
@@ -932,19 +969,7 @@ fun LibraryScreen(
                         }
                     }
                     val sortedSongs = remember(songs, sortKey, sortAscending) {
-                        if (sortKey == "year") {
-                            sortSongsByYear(songs, sortAscending)
-                        } else {
-                            val base = when (sortKey) {
-                                "artist" -> songs.sortedBy { it.artist.lowercase() }
-                                "duration" -> songs.sortedBy { it.durationMs }
-                                "dateAdded" -> songs.sortedBy { it.dateAdded }
-                                "playCount" -> songs.sortedBy { it.playCount }
-                                "lastPlayedAt" -> songs.sortedBy { it.lastPlayedAt ?: 0L }
-                                else -> songs.sortedBy { it.title.lowercase() }
-                            }
-                            if (sortAscending) base else base.reversed()
-                        }
+                        sortSongs(songs, sortKey, sortAscending)
                     }
                     SongList(
                         songs = sortedSongs,
@@ -975,19 +1000,7 @@ fun LibraryScreen(
                 selectedTab == LibraryTab.FAVORITES -> {
                     val favoritesRaw by dao.getFavorites().collectAsState(initial = emptyList())
                     val songs = remember(favoritesRaw, favoritesSortKey, favoritesSortAscending) {
-                        if (favoritesSortKey == "year") {
-                            sortSongsByYear(favoritesRaw, favoritesSortAscending)
-                        } else {
-                            val base = when (favoritesSortKey) {
-                                "artist" -> favoritesRaw.sortedBy { it.artist.lowercase() }
-                                "duration" -> favoritesRaw.sortedBy { it.durationMs }
-                                "dateAdded" -> favoritesRaw.sortedBy { it.dateAdded }
-                                "playCount" -> favoritesRaw.sortedBy { it.playCount }
-                                "lastPlayedAt" -> favoritesRaw.sortedBy { it.lastPlayedAt ?: 0L }
-                                else -> favoritesRaw.sortedBy { it.title.lowercase() }
-                            }
-                            if (favoritesSortAscending) base else base.reversed()
-                        }
+                        sortSongs(favoritesRaw, favoritesSortKey, favoritesSortAscending)
                     }
                     SongList(
                         songs = songs,
