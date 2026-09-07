@@ -416,7 +416,7 @@ private fun AddSongsFullScreen(
         },
         bottomBar = {
             if (selected.isNotEmpty()) {
-                Surface(color = Color.Transparent) {
+                Surface(color = Color.Transparent, modifier = Modifier.navigationBarsPadding()) {
                     Button(
                         onClick = { onConfirm(allSongs.filter { it.id in selected }) },
                         modifier = Modifier.fillMaxWidth().padding(16.dp)

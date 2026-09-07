@@ -262,6 +262,16 @@ fun EqualizerScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
+            } else if (!eqState.bassBoostStrengthSupported) {
+                // O efeito em si existe e liga/desliga, mas o fabricante não
+                // permite ajustar o QUANTO — mover o slider não muda nada de
+                // verdade nesse caso, então é melhor avisar do que deixar a
+                // pessoa achando que está quebrado.
+                Text(
+                    "Este aparelho não permite ajustar a intensidade — fica sempre no nível padrão do sistema.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
             }
             Slider(
                 enabled = eqState.bassBoostAvailable,
@@ -284,6 +294,25 @@ fun EqualizerScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
+            } else {
+                if (!eqState.virtualizerStrengthSupported) {
+                    Text(
+                        "Este aparelho não permite ajustar a intensidade — fica sempre no nível padrão do sistema.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+                // O efeito simula som surround através da diferença entre os
+                // dois canais — em muitos aparelhos ele só é audível de
+                // verdade com fone de ouvido (fica praticamente imperceptível
+                // no alto-falante do aparelho, que já é mono/quase-mono na
+                // prática). Sem esse aviso, quem testasse no alto-falante ia
+                // achar que o efeito simplesmente não funciona.
+                Text(
+                    "Funciona melhor (ou só é perceptível) com fone de ouvido conectado.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
             }
             Slider(
                 enabled = eqState.virtualizerAvailable,
@@ -303,6 +332,18 @@ fun EqualizerScreen(
             if (!eqState.reverbAvailable) {
                 Text(
                     "Não suportado neste aparelho.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+            } else {
+                // Diferente do BassBoost/Virtualizer, não existe uma forma
+                // de perguntar ao aparelho "esse reverb é bom de verdade ou
+                // só um selo de aprovação?" — vários fabricantes implementam
+                // o PresetReverb de um jeito bem sutil (ou quase
+                // imperceptível) mesmo relatando suporte completo. Isso não
+                // é algo que dá pra consertar do lado do app.
+                Text(
+                    "O quanto esse efeito é perceptível varia bastante de aparelho pra aparelho.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )

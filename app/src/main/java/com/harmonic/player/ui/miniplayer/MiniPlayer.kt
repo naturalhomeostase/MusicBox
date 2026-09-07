@@ -74,6 +74,15 @@ fun MiniPlayer(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
+            // Empurra o mini player pra cima da barra de navegação do
+            // sistema (os 3 botões clássicos: voltar/início/recentes).
+            // Sem isso, como o app desenha "por trás" das barras do
+            // sistema (edge-to-edge), a barra semitransparente do Android
+            // ficava sobrepondo a parte de baixo do mini player em
+            // aparelhos que usam esse modo — em gestos (a barrinha fina),
+            // o espaço extra é mínimo e passa despercebido, foi por isso
+            // que não tinha aparecido antes nos testes.
+            .navigationBarsPadding()
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         val widthPx = with(density) { maxWidth.toPx() }

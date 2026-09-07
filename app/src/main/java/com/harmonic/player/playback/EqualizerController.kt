@@ -22,7 +22,13 @@ data class EqualizerUiState(
     val reverbPreset: Int = 0,
     val bassBoostAvailable: Boolean = true,
     val virtualizerAvailable: Boolean = true,
-    val reverbAvailable: Boolean = true
+    val reverbAvailable: Boolean = true,
+    // Alguns aparelhos relatam suporte ao BassBoost/Virtualizer mas não
+    // permitem ajustar a INTENSIDADE (fica travada num valor padrão do
+    // fabricante) — sem isso, mexer no slider parecia simplesmente "não
+    // fazer nada", sem nenhuma explicação do porquê.
+    val bassBoostStrengthSupported: Boolean = true,
+    val virtualizerStrengthSupported: Boolean = true
 )
 
 /**
@@ -118,7 +124,9 @@ class EqualizerController {
                 bands = eq.second,
                 bassBoostAvailable = bb != null,
                 virtualizerAvailable = vr != null,
-                reverbAvailable = reverb != null
+                reverbAvailable = reverb != null,
+                bassBoostStrengthSupported = bb?.strengthSupported ?: true,
+                virtualizerStrengthSupported = vr?.strengthSupported ?: true
             )
             // Reaplica os valores salvos assim que os efeitos são criados
             reapplyCurrentState()
